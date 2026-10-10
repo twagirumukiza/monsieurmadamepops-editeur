@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <meta name="copyright" content="© 2026 Twagirumukiza – Tous droits réservés">
+  <!-- MonsieurMadamePops-editeur – private fan/collector tool. Keywords: Monsieur Madame, Happy Meal. Not affiliated with McDonald's or the rights holders of Monsieur Madame. -->
+<title>MonsieurMadamePops-editeur</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1a2e;--card:#172540;--text:#fff6dc;--muted:#a9b6d3;--acc:#ffc933;--acc2:#ffd95e;--bd:#2a3d63;--hd:#1d6fd6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+header{background:var(--hd);padding:1rem 1.5rem;border-bottom:3px solid var(--bd)}
+header h1{font-family:'Press Start 2P',monospace;font-size:.9rem;line-height:1.5}
+header p{color:var(--muted);font-size:.9rem;margin-top:.3rem}
+main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem 6rem}
+.card{background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:1rem;margin-bottom:1rem}
+.card.drag{border-color:var(--acc2)}
+.drop{text-align:center;padding:2rem 1rem;border-style:dashed}
+.drop p{color:var(--muted);margin:.4rem 0 1rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap}
+.num{background:var(--acc2);color:#1a1a1a;font-weight:800;padding:.15rem .55rem;border-radius:6px;margin-right:.5rem}
+.muted{color:var(--muted);font-size:.85rem}
+.price{color:var(--acc2);font-weight:800}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.7rem;margin:.9rem 0}
+label{display:flex;flex-direction:column;font-size:.75rem;color:var(--muted);font-weight:700;gap:.2rem}
+input[type=text],input[type=number],textarea{background:var(--bg);color:var(--text);border:2px solid var(--bd);border-radius:8px;padding:.5rem;font:inherit;font-size:.9rem}
+textarea{resize:vertical;min-height:3rem}
+input:focus,textarea:focus{outline:none;border-color:var(--acc)}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem}
+.slot{border:2px dashed var(--bd);border-radius:10px;aspect-ratio:1;position:relative;overflow:hidden;cursor:pointer;display:grid;place-items:center;text-align:center;font-size:.8rem;color:var(--muted);background:var(--bg);padding:.3rem}
+.slot:hover{border-color:var(--acc)}
+.slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slot b{position:absolute;bottom:0;left:0;right:0;background:rgba(10,21,10,.88);color:var(--text);padding:.2rem;font-size:.68rem;word-break:break-all}
+.slot input{display:none}
+button{font:inherit;font-weight:800;cursor:pointer;border-radius:10px;border:none;padding:.55rem 1rem}
+.btn{background:var(--acc);color:#182a4a;box-shadow:0 4px 0 #b88a00}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn2{background:transparent;color:var(--acc);border:2px solid var(--acc)}
+.btn-x{background:transparent;color:#ff7b6b;border:2px solid #ff7b6b}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--hd);border-top:3px solid var(--bd);padding:.7rem 1rem;display:flex;justify-content:center;gap:.8rem;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}
+.chip{border:2px solid var(--bd);border-radius:999px;padding:.15rem .7rem;font-weight:800;font-size:.85rem;background:var(--bg)}
+.chip b{color:var(--acc);margin-left:.2rem}
+.chip.warn{border-color:#ffb74d;color:#ffb74d}.chip.bad{border-color:#ff7b6b;color:#ff7b6b}
+dialog{background:var(--card);color:var(--text);border:2px solid var(--acc);border-radius:14px;padding:1.2rem;max-width:520px;width:92%;margin:auto}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog h3{font-family:'Press Start 2P',monospace;font-size:.7rem;color:var(--acc);margin-bottom:.9rem}
+.opt{flex-direction:row;align-items:center;gap:.5rem;font-size:.9rem;color:var(--text);font-weight:700;padding:.2rem 0}
+.plist{max-height:220px;overflow:auto;border:2px solid var(--bd);border-radius:8px;padding:.4rem .6rem;margin:.5rem 0}
+.plist .opt{font-weight:400;font-size:.82rem}
+#status{color:var(--acc2);font-weight:700}
+@media(max-width:560px){.slots{grid-template-columns:repeat(2,1fr)}}
+select{font:inherit;padding:.5rem;border-radius:8px;border:2px solid var(--bd);background:var(--bg);color:inherit}
+.mv{padding:.25rem .6rem!important}
+.ex{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}
+.exi{border:2px solid var(--bd);border-radius:10px;padding:.4rem;background:var(--bg);display:grid;gap:.3rem;align-content:start;font-size:.7rem;word-break:break-all}
+.exi img,.exi video{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;background:#000}
+.exb{display:flex;gap:.25rem;flex-wrap:wrap}
+.rtb{display:flex;gap:.3rem;flex-wrap:wrap;margin:.2rem 0}
+.rtb button{background:var(--bg);color:var(--text);border:2px solid var(--bd);border-radius:6px;padding:.2rem .5rem;font-size:.8rem;cursor:pointer}
+.rtb button:hover{border-color:var(--acc)}
+.rte{min-height:7rem;background:var(--bg);border:2px solid var(--bd);border-radius:8px;padding:.6rem;font-size:.9rem;color:var(--text);overflow:auto;max-height:260px}
+.rte:focus{outline:none;border-color:var(--acc)}
+.rte ul,.rte ol{margin-left:1.3rem}
+.sb{position:absolute;top:.3rem;left:.3rem;right:.3rem;display:flex;gap:.3rem;flex-wrap:wrap;z-index:2}
+.sb button{font-size:.7rem;padding:.15rem .4rem;border-radius:6px;border:2px solid #000;background:rgba(26,20,36,.9);color:#fff;cursor:pointer}
+.slot .cur{opacity:.55}
+.undo-row{display:flex;gap:.4rem;flex-wrap:wrap}
+.sb .cov{background:#ffd95e!important;color:#1a1a1a!important;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1>😊 MonsieurMadamePops-editeur</h1>
+  <p>Charge l'index du site, modifie ou ajoute des items, puis télécharge le nouvel index et les photos.</p>
+</header>
+<main id="app"></main>
+<div class="bar" id="bar" hidden>
+  <span id="status"></span>
+  <button class="btn" onclick="openDl()">⬇️ Télécharger…</button>
+</div>
+<dialog id="dlg"></dialog>
+
+<script>
+const ANG=[['front','Face'],['right','Côté droit'],['left','Côté gauche'],['back','Dos']];
+const HINT={front:/face|front|avant/i,right:/droit|right/i,left:/gauche|left/i,back:/dos|back|arri/i};
+const SITE='https://twagirumukiza.github.io/monsieur-madame/index.html';
+const SITE_BASE=SITE.replace(/index\.html$/,'');
+const TYPES={premium:'⭐ Premium',accessory:'🔗 Accessoire'};
+const COND={new:'Neuf',vgood:'Très bon état',good:'Bon état'};
+const pad=n=>String(n).padStart(2,'0');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const slugify=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+let src='',start=-1,end=-1,products=[],defPrice=9.99,photos={},view='load',cur=null;
+
+/* ---------- Historique (annuler / rétablir) ---------- */
+let undoSt=[],redoSt=[],editBackup=null;
+function snap(){return {products:products.map(p=>{const c=JSON.parse(JSON.stringify(p,(k,v)=>k==='mlist'?undefined:v));c.mlist=(p.mlist||[]).map(e=>({...e}));return c;}),photos:Object.fromEntries(Object.entries(photos).map(([k,v])=>[k,{...v}]))};}
+function sig(x){return JSON.stringify(x.products.map(p=>({...p,mlist:(p.mlist||[]).map(e=>e.old||(e.file&&e.file.name+e.file.size))})))+JSON.stringify(Object.entries(x.photos).map(([k,v])=>[k,Object.entries(v).map(([a,f])=>[a,f&&f.name+f.size])]));}
+function restore(x){products=x.products;photos=x.photos;}
+function pushUndo(x){undoSt.push(x||snap());if(undoSt.length>50)undoSt.shift();redoSt=[];}
+function undo(){if(!undoSt.length)return;redoSt.push(snap());restore(undoSt.pop());view='list';cur=null;render();}
+function redo(){if(!redoSt.length)return;undoSt.push(snap());restore(redoSt.pop());view='list';cur=null;render();}
+document.addEventListener('keydown',e=>{if(view==='list'&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}});
+
+/* ---------- Texte enrichi ---------- */
+function cleanHtml(h){
+  const t=document.createElement('template');t.innerHTML=h;const ok={B:1,STRONG:1,I:1,EM:1,U:1,UL:1,OL:1,LI:1,BR:1,P:1,H3:1,DIV:1};
+  (function walk(n){[...n.childNodes].forEach(c=>{if(c.nodeType===1){walk(c);if(!ok[c.tagName])c.replaceWith(...c.childNodes);else[...c.attributes].forEach(a=>c.removeAttribute(a.name));}else if(c.nodeType!==3)c.remove();});})(t.content);
+  return t.innerHTML;
+}
+function richIn(v){v=String(v||'');return /<(b|strong|i|em|u|ul|ol|li|br|p|div|h3)\b/i.test(v)?cleanHtml(v):esc(v).replace(/\n/g,'<br>');}
+function rin(el){const h=el.textContent.trim()?cleanHtml(el.innerHTML):'';get(cur)[el.dataset.lang].desc=h;}
+function rcmd(c,v){document.execCommand(c,false,v||null);}
+function rte(l,lang,v){
+  const b=[['bold','<b>G</b>'],['italic','<i>I</i>'],['underline','<u>S</u>'],['insertUnorderedList','• Liste'],['insertOrderedList','1. Liste']];
+  return `<div class="rtw"><label style="margin-bottom:.2rem">${l}</label><div class="rtb">${b.map(([c,t])=>`<button type="button" title="${c}" onmousedown="event.preventDefault();rcmd('${c}')">${t}</button>`).join('')}<button type="button" onmousedown="event.preventDefault();rcmd('formatBlock','H3')">Titre</button><button type="button" onmousedown="event.preventDefault();rcmd('formatBlock','DIV')">¶ Normal</button><button type="button" onmousedown="event.preventDefault();rcmd('removeFormat')">⌫ Style</button></div>
+  <div class="rte" contenteditable="true" data-lang="${lang}" oninput="rin(this)" onpaste="event.preventDefault();document.execCommand('insertText',false,event.clipboardData.getData('text/plain'))">${richIn(v)}</div></div>`;
+}
+
+/* ---------- Lecture de l'index ---------- */
+function parseIndex(text){
+  const m=text.match(/const products\s*=\s*\[/);
+  if(!m)throw new Error('Tableau "const products" introuvable dans ce fichier.');
+  const s=m.index+m[0].length-1;let d=0,q=null,e=-1;
+  for(let i=s;i<text.length;i++){
+    const c=text[i];
+    if(q){if(c==='\\')i++;else if(c===q)q=null;continue;}
+    if(c==='"'||c==="'"||c==='`')q=c;
+    else if(c==='[')d++;
+    else if(c===']'&&--d===0){e=i;break;}
+  }
+  if(e<0)throw new Error('Fin du tableau products introuvable.');
+  const arr=(new Function('return '+text.slice(s,e+1)))();
+  if(!Array.isArray(arr)||!arr.length)throw new Error('Aucun item trouvé.');
+  const p=text.match(/const PRICE\s*=\s*([\d.]+)/);
+  src=text;start=s;end=e;products=arr;products.forEach(x=>{x.mlist=(x.media||[]).map(n=>({old:n}));if(x.premium){x.type=x.type||'premium';delete x.premium;}});undoSt=[];redoSt=[];defPrice=p?Number(p[1]):9.99;photos={};view='list';
+  render();
+}
+function loadText(t){try{parseIndex(t);}catch(err){alert('Erreur : '+err.message);}}
+function loadFile(f){if(f)f.text().then(loadText);}
+async function loadOnline(){
+  try{const r=await fetch(SITE,{cache:'no-store'});if(!r.ok)throw 0;loadText(await r.text());}
+  catch(e){alert("Impossible de charger le site en ligne. Choisis le fichier index.html à la place.");}
+}
+
+/* ---------- Écriture de l'index ---------- */
+function usedSlugs(except){return new Set(products.filter(p=>p!==except&&p.slug).map(p=>p.slug));}
+function newMedia(p){return (p.mlist||[]).filter(e=>e.file);}
+function assignMedia(p){
+  const L=p.mlist||[],used=new Set(L.filter(e=>e.old).map(e=>e.old));let n=1;
+  L.forEach(e=>{if(!e.file)return;
+    const v=e.file.type.startsWith('video/'),ext=v?((e.file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4'):(/\.gif$/i.test(e.file.name)?'gif':'jpg');
+    let nm;do{nm=`${p.slug}-extra-${pad(n++)}.${ext}`;}while(used.has(nm));used.add(nm);e.name=nm;});
+  p.media=L.map(e=>e.old||e.name);
+  if(!p.media.length)delete p.media;
+}
+function ensureSlugs(){
+  products.forEach(p=>{
+    const has=Object.values(photos[p.id]||{}).some(Boolean)||newMedia(p).length;
+    if(has&&!p.slug){
+      const base=slugify(p.fr.name)||('item-'+pad(p.id));let s=base,n=2;const u=usedSlugs(p);
+      while(u.has(s))s=base+'-'+n++;p.slug=s;
+    }
+  });
+  products.forEach(p=>{if(p.slug||!newMedia(p).length)assignMedia(p);});
+}
+const q=JSON.stringify;
+function ser(p){
+  const t=l=>`{ name: ${q(l.name||'')}, desc: ${q(l.desc||'')}, tag: ${q(l.tag||'')} }`;
+  return `  {\n    id: ${p.id},\n`+(p.slug?`    slug: ${q(p.slug)},\n`:'')+(p.price!=null&&p.price!==''?`    price: ${Number(p.price)},\n`:'')+(p.cond&&COND[p.cond]?`    cond: ${q(p.cond)},\n`:'')+(p.type&&TYPES[p.type]?`    type: ${q(p.type)},\n`:'')+(p.articulated?`    articulated: true,\n`:'')+(p.cover&&p.cover!=='front'&&ANG.some(a=>a[0]===p.cover)?`    cover: ${q(p.cover)},\n`:'')+(p.stock===false||p.stock==='limited'?`    stock: ${q(p.stock)},\n`:'')+(p.qty!=null&&p.qty!==''&&!isNaN(p.qty)?`    qty: ${Math.max(0,Math.floor(Number(p.qty)))},\n`:'')+(p.printRun!=null&&p.printRun!==''&&!isNaN(p.printRun)&&Number(p.printRun)>0?`    printRun: ${Math.floor(Number(p.printRun))},\n`:'')+(p.rarity!=null&&p.rarity!==''&&!isNaN(p.rarity)?`    rarity: ${Math.min(100,Math.max(0,Math.floor(Number(p.rarity))))},\n`:'')+(p.demand!=null&&p.demand!==''&&!isNaN(p.demand)?`    demand: ${Math.min(100,Math.max(0,Math.floor(Number(p.demand))))},\n`:'')+(p.collIndex!=null&&p.collIndex!==''&&!isNaN(p.collIndex)?`    collIndex: ${Math.min(100,Math.max(0,Math.floor(Number(p.collIndex))))},\n`:'')+(yrOk(p.year)?`    year: ${Math.floor(Number(p.year))},\n`:'')+(p.cotes&&p.cotes.length?`    cotes: ${q(p.cotes)},\n`:'')+(p.media&&p.media.length?`    media: ${q(p.media)},\n`:'')+`    en: ${t(p.en)},\n    fr: ${t(p.fr)}\n  }`;
+}
+function productsCode(){
+  ensureSlugs();products.forEach(p=>{if(!p.en.name)p.en.name=p.fr.name;});
+  return 'const products = [\n'+products.map(ser).join(',\n')+'\n];';
+}
+function copyCode(){
+  const ta=document.getElementById('codeTa'),t=ta.value,st=document.getElementById('dlSt');
+  const manual=()=>{st.textContent='Code sélectionné : fais Ctrl+C (⌘+C sur Mac).';};
+  const fb=()=>{ta.focus();ta.select();ta.setSelectionRange(0,t.length);let ok=false;try{ok=document.execCommand('copy');}catch(e){}ok?(st.textContent='Code copié ✓'):manual();};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>{st.textContent='Code copié ✓';},fb);else fb();
+}
+function buildIndex(){
+  ensureSlugs();
+  products.forEach(p=>{if(!p.en.name)p.en.name=p.fr.name;});
+  return src.slice(0,start)+'[\n'+products.map(ser).join(',\n')+'\n]'+src.slice(end+1);
+}
+
+/* ---------- Interface ---------- */
+function photoCount(p){return Object.values(photos[p.id]||{}).filter(Boolean).length+newMedia(p).length;}
+function render(){
+  const app=document.getElementById('app');
+  document.getElementById('bar').hidden=view==='load';
+  if(view==='load'){
+    app.innerHTML=`<div class="card drop" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');loadFile(event.dataTransfer.files[0])">
+      <h2 style="font-size:1.1rem">1. Charge l'index de MonsieurMadamePops</h2>
+      <p>Glisse ici le fichier <code>index.html</code> du site, ou choisis-le.</p>
+      <button class="btn" onclick="document.getElementById('f').click()">📄 Choisir index.html</button>
+      <input id="f" type="file" accept=".html,text/html" hidden onchange="loadFile(this.files[0])">
+      <button class="btn2" onclick="loadOnline()">🌐 Charger depuis le site en ligne</button>
+    </div>`;
+    return;
+  }
+  if(view==='edit'){return renderEdit();}
+  app.innerHTML=`<div class="row" style="margin-bottom:1rem"><h2 style="font-size:1.1rem">${products.length} items détectés</h2>
+    <div class="undo-row"><button class="btn2" ${undoSt.length?'':'disabled'} onclick="undo()">↶ Annuler</button><button class="btn2" ${redoSt.length?'':'disabled'} onclick="redo()">↷ Rétablir</button><button class="btn2" onclick="document.getElementById('bulk').click()">📚 Ajouter plusieurs items</button><input id="bulk" type="file" accept="image/*" multiple hidden onchange="bulkAdd(this.files);this.value=''"><button class="btn" onclick="addItem()">➕ Ajouter un item</button></div></div>`+
+  yearStrip()+
+  products.map((p,i)=>`<div class="card row">
+    <div><span class="num" title="Numéro affiché sur le site (position dans la liste)">#${pad(i+1)}</span><b>${esc(p.fr.name)||'<i>(sans nom)</i>'}</b> <span class="muted">/ ${esc(p.en.name)}</span><br>
+      <span class="muted">${esc(p.fr.tag)} · ${p.cond&&COND[p.cond]?COND[p.cond]+' · ':''}</span>${p.type&&TYPES[p.type]?'<b style="color:#ffd95e">'+TYPES[p.type]+'</b><span class="muted"> · </span>':''}${p.articulated?'<b style="color:#b39ddb">🦾 Articulé</b><span class="muted"> · </span>':''}${p.qty!=null&&!isNaN(p.qty)?'<b style="color:#9fd6ff">📦 '+Math.max(0,Math.floor(p.qty))+'</b><span class="muted"> · </span>':''}${(p.stock===false||(p.qty!=null&&Number(p.qty)<=0))?'<b style="color:#ff7b6b">🚫 Épuisé</b><span class="muted"> · </span>':p.stock==='limited'?'<b style="color:#ffb74d">⚠️ Stock limité</b><span class="muted"> · </span>':''}${yrOk(p.year)?'<b style="color:#fff">📅 '+Math.floor(Number(p.year))+'</b><span class="muted"> · </span>':''}${p.printRun!=null&&!isNaN(p.printRun)&&Number(p.printRun)>0?'<b style="color:#ce93d8">📜 ×'+Math.floor(p.printRun)+'</b><span class="muted"> · </span>':''}${p.collIndex!=null&&!isNaN(p.collIndex)?'<b style="color:#ffd54f">💎 '+Math.floor(p.collIndex)+'/100</b><span class="muted"> · </span>':(p.rarity!=null&&!isNaN(p.rarity)?'<b style="color:#ffd54f">💎 R'+Math.floor(p.rarity)+'</b><span class="muted"> · </span>':'')}<span class="price">${p.price!=null&&p.price!==''?Number(p.price).toFixed(2)+' €':'📈 cote'}</span>
+      <span class="muted"> · ${p.slug?'photos individuelles':'photo de groupe'}${photoCount(p)?` · <b style="color:var(--acc)">${photoCount(p)} nouvelle(s)</b>`:''}</span></div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn2 mv" title="Monter" ${i===0?'disabled':''} onclick="mv(${i},-1)">▲</button><button class="btn2 mv" title="Descendre" ${i===products.length-1?'disabled':''} onclick="mv(${i},1)">▼</button><button class="btn2" onclick="edit(${p.id})">✏️ Modifier</button><button class="btn-x" title="Supprimer" onclick="delItem(${p.id})">🗑</button></div></div>`).join('');
+  updStatus();
+}
+/* ---------- Années : aperçu du menu burger du site + outils en lot ---------- */
+function yearStrip(){
+  const g=new Map();products.forEach(p=>{const y=yrOk(p.year)?Math.floor(Number(p.year)):0;g.set(y,(g.get(y)||0)+1);});
+  const ys=[...g.keys()].sort((a,b)=>(a===0)-(b===0)||b-a);
+  const out=products.filter(p=>p.stock===false||(p.qty!=null&&!isNaN(p.qty)&&Number(p.qty)<=0)).length;
+  const chips=ys.map(y=>y?`<span class="chip">📅 ${y} <b>${g.get(y)}</b></span>`:`<span class="chip warn">⚠️ Sans année <b>${g.get(y)}</b></span>`).join('');
+  return `<div class="card" style="margin-bottom:1rem">
+    <div class="row"><b>🍔 Menu du site (par année)</b><span><button class="btn2" onclick="openYearDlg()">📅 Année en lot…</button> <button class="btn2" onclick="sortByYear()">↕ Trier par année</button></span></div>
+    <div class="chips">${chips}${out?`<span class="chip bad">🚫 Épuisés <b>${out}</b></span>`:''}</div>
+    ${g.get(0)?'<div class="muted" style="margin-top:.4rem">Les items sans année apparaissent en bas du menu, dans « Année non précisée ».</div>':''}
+  </div>`;
+}
+function sortByYear(){
+  pushUndo();
+  const y=p=>yrOk(p.year)?Math.floor(Number(p.year)):0;
+  products=products.map((p,i)=>[p,i]).sort((a,b)=>((y(a[0])===0)-(y(b[0])===0))||(y(b[0])-y(a[0]))||(a[1]-b[1])).map(x=>x[0]);
+  render();
+}
+function openYearDlg(){
+  const d=document.getElementById('dlg'),nb=products.filter(p=>!yrOk(p.year)).length;
+  d.innerHTML=`<h3>Année en lot</h3>
+    <label>Année d'édition<input type="number" id="ybY" min="1900" max="2100" step="1" placeholder="ex. 2024" style="max-width:140px"></label>
+    <label class="opt"><input type="radio" name="ybS" value="empty" checked> Seulement les items sans année (${nb})</label>
+    <label class="opt"><input type="radio" name="ybS" value="all"> Tous les items (${products.length}) — remplace les années existantes</label>
+    <label class="opt"><input type="radio" name="ybS" value="clear"> Effacer l'année de tous les items</label>
+    <div class="row" style="margin-top:1rem"><span id="ybSt" class="muted"></span><span><button class="btn2" onclick="this.closest('dialog').close()">Annuler</button> <button class="btn" onclick="applyYearBulk()">Appliquer</button></span></div>`;
+  d.showModal();
+}
+function applyYearBulk(){
+  const sc=(document.querySelector('input[name=ybS]:checked')||{}).value,v=String(document.getElementById('ybY').value).trim(),st=document.getElementById('ybSt');
+  if(sc!=='clear'&&!/^\d{4}$/.test(v)){st.textContent='Saisis une année à 4 chiffres (ex. 2024).';return;}
+  pushUndo();
+  products.forEach(p=>{if(sc==='clear')delete p.year;else if(sc==='all'||!yrOk(p.year))p.year=Number(v);});
+  document.getElementById('dlg').close();render();
+}
+function updStatus(){
+  const n=products.reduce((a,p)=>a+photoCount(p),0);
+  document.getElementById('status').textContent=n?`${n} nouvelle(s) photo(s)`:'';
+}
+function mv(i,d){const j=i+d;if(j<0||j>=products.length)return;pushUndo();[products[i],products[j]]=[products[j],products[i]];render();}
+function setType(v){const p=get(cur);delete p.premium;if(v)p.type=v;else delete p.type;}
+function setArt(c){const p=get(cur);if(c)p.articulated=true;else delete p.articulated;}
+const yrOk=y=>y!=null&&y!==''&&!isNaN(y)&&Math.floor(Number(y))>=1900&&Math.floor(Number(y))<=2100;
+function setYear(v){const p=get(cur);v=String(v).trim();if(v===''||!/^\d{4}$/.test(v))delete p.year;else p.year=Number(v);}
+function setQtyOn(on){const p=get(cur);if(on){if(p.qty==null||isNaN(p.qty))p.qty=1;}else delete p.qty;renderEdit();}
+function setQty(v){const p=get(cur);v=String(v).trim();p.qty=(v===''||isNaN(v))?0:Math.max(0,Math.floor(Number(v)));const n=document.getElementById('qtyNote');if(n)n.style.display=p.qty<=0?'block':'none';}
+function setStock(v){const p=get(cur);if(v==='out')p.stock=false;else if(v==='low')p.stock='limited';else delete p.stock;}
+function setCond(v){const p=get(cur);if(v)p.cond=v;else delete p.cond;}
+function get(id){return products.find(p=>p.id===id);}
+function addItem(){
+  const bk=snap();
+  const id=Math.max(0,...products.map(p=>p.id))+1;
+  products.push({id,_new:true,en:{name:'',desc:'',tag:''},fr:{name:'',desc:'',tag:''}});
+  edit(id,bk);
+}
+function edit(id,bk){editBackup=bk||snap();cur=id;view='edit';render();window.scrollTo(0,0);}
+function cancelEdit(){if(editBackup)restore(editBackup);editBackup=null;view='list';cur=null;render();}
+function delItem(id){
+  const p=get(id);if(!p)return;
+  if(!confirm('Supprimer « '+(p.fr.name||'cet item')+' » ?\nTu pourras annuler avec ↶. (Ses photos déjà en ligne restent dans le dossier images/.)'))return;
+  pushUndo();products=products.filter(x=>x.id!==id);delete photos[id];
+  if(cur===id){view='list';cur=null;editBackup=null;}render();
+}
+function autoGroups(imgs){
+  const T=imgs.map(f=>f.lastModified||0),gaps=T.slice(1).map((t,i)=>t-T[i]),pos=gaps.filter(g=>g>0).sort((a,b)=>a-b);
+  if(pos.length&&gaps.every(g=>g>=0)){
+    const med=pos[Math.floor(pos.length/2)],thr=Math.max(15000,med*4),gr=[[imgs[0]]];
+    imgs.slice(1).forEach((f,i)=>{if(gaps[i]>thr)gr.push([]);gr[gr.length-1].push(f);});
+    if(gr.length>1&&gr.every(g=>g.length<=6))return gr.map(g=>({name:'',files:g}));
+  }
+  const out=[];for(let i=0;i<imgs.length;i+=4)out.push({name:'',files:imgs.slice(i,i+4)});return out;
+}
+function bulkAdd(list){
+  const imgs=[...list].filter(f=>f.type.startsWith('image/')).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  if(!imgs.length)return;
+  const H=/(^|[^a-z])(face|front|avant|droite|droit|right|gauche|left|dos|back|arriere|arrière)(?![a-z])/i;
+  let groups=[];
+  if(imgs.filter(f=>H.test(f.name)).length>=imgs.length/2){
+    const m=new Map();
+    imgs.forEach(f=>{const nm=f.name.replace(/\.[^.]+$/,'').replace(new RegExp(H.source,'ig'),'$1').replace(/[-_ .()]+/g,' ').trim()||'Item';const k=nm.toLowerCase();if(!m.has(k))m.set(k,{name:nm,files:[]});m.get(k).files.push(f);});
+    groups=[...m.values()];
+  }else groups=autoGroups(imgs);
+  pushUndo();
+  let id=Math.max(0,...products.map(p=>p.id));const newIds=[];
+  groups.forEach(g=>{
+    id++;newIds.push(id);const p={id,_new:true,en:{name:g.name,desc:'',tag:''},fr:{name:g.name,desc:'',tag:''},mlist:[]},ph=photos[id]={};
+    const rest=[];g.files.forEach(f=>{const k=ANG.map(a=>a[0]).find(k=>HINT[k].test(f.name)&&!ph[k]);if(k)ph[k]=f;else rest.push(f);});
+    rest.forEach(f=>{const k=ANG.map(a=>a[0]).find(k=>!ph[k]);if(k)ph[k]=f;else p.mlist.push({file:f});});
+    products.push(p);
+  });
+  view='list';render();
+  document.getElementById('status').textContent=groups.length+' item(s) créé(s) — identification en cours…';autoFill(groups,newIds);
+}
+function done(){
+  const p=get(cur);
+  if(p&&p._new&&!p.fr.name.trim()&&!photoCount(p))products=products.filter(x=>x!==p);
+  if(editBackup&&sig(editBackup)!==sig(snap()))pushUndo(editBackup);
+  editBackup=null;view='list';cur=null;render();
+}
+function removeNew(){products=products.filter(x=>x.id!==cur);delete photos[cur];view='list';cur=null;render();}
+function setF(lang,k,v){get(cur)[lang][k]=v;if(lang==='fr'&&k==='name')labels();}
+/* ---------- Cote (historique de prix) ---------- */
+function coteParse(txt){
+  const ok=new Map(),bad=[];
+  String(txt||'').split(/\r?\n/).forEach(l=>{
+    l=l.trim();if(!l)return;
+    const m=l.match(/^(\d{4}-\d{2}(?:-\d{2})?|\d{1,2}\/\d{1,2}\/\d{2,4})\s*[;\t,: ]\s*(\d+(?:[.,]\d+)?)\s*(?:€|eur|euros?)?$/i);
+    if(!m){bad.push(l);return;}
+    let d=m[1];
+    if(d.includes('/')){const a=d.split('/');d=(a[2].length===2?'20'+a[2]:a[2])+'-'+a[1].padStart(2,'0')+'-'+a[0].padStart(2,'0');}
+    else if(d.length===7)d+='-01';
+    const dt=new Date(d+'T00:00:00Z');
+    if(isNaN(dt)||dt.toISOString().slice(0,10)!==d){bad.push(l);return;}
+    ok.set(d,Number(m[2].replace(',','.')));
+  });
+  return {ok:[...ok.entries()].sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0),bad};
+}
+function coteNoteTxt(n,bad){
+  let t=n?('✅ '+n+' relevé'+(n>1?'s':'')+' valide'+(n>1?'s':'')+(n===1?' (2 minimum pour afficher le graphique)':'')):'Aucun relevé : la fiche affichera « Cote pas encore disponible ».';
+  if(bad&&bad.length)t+='  ⚠️ Ligne(s) ignorée(s) : '+bad.map(x=>'« '+x+' »').join(', ');
+  return t;
+}
+function setCotes(v){
+  const p=get(cur),r=coteParse(v);
+  if(r.ok.length)p.cotes=r.ok;else delete p.cotes;
+  const n=document.getElementById('coteNote');if(n)n.textContent=coteNoteTxt(r.ok.length,r.bad);
+}
+function addCoteToday(){
+  const i=document.getElementById('coteAdd'),t=document.getElementById('coteTxt');if(!i||!t)return;
+  const v=String(i.value).trim().replace(',','.');if(v===''||isNaN(v)||Number(v)<0){i.focus();return;}
+  const d=new Date().toISOString().slice(0,10);
+  t.value=(t.value.trim()?t.value.replace(/\s+$/,'')+'\n':'')+d+' ; '+String(Number(v)).replace('.',',');
+  i.value='';setCotes(t.value);
+}
+function setPrice(v){const p=get(cur);v=v.trim().replace(',','.');if(v===''||isNaN(v))delete p.price;else p.price=Number(v);}
+function setPrintRun(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v)||Number(v)<=0)delete p.printRun;else p.printRun=Math.floor(Number(v));}
+function setRarity(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v))delete p.rarity;else p.rarity=Math.min(100,Math.max(0,Math.floor(Number(v))));}
+function setDemand(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v))delete p.demand;else p.demand=Math.min(100,Math.max(0,Math.floor(Number(v))));}
+function setCollIndex(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v))delete p.collIndex;else p.collIndex=Math.min(100,Math.max(0,Math.floor(Number(v))));}
+function setSlug(v){const p=get(cur);const s=slugify(v);if(s)p.slug=s;else delete p.slug;labels();}
+function slugPreview(p){return p.slug||slugify(p.fr.name)||('item-'+pad(p.id));}
+function labels(){const p=get(cur);document.querySelectorAll('.slot b').forEach(b=>b.textContent=slugPreview(p)+'-'+b.dataset.k+'.jpg');}
+function setPhoto(k,f){if(f&&f.type.startsWith('image/')){(photos[cur]=photos[cur]||{})[k]=f;renderEdit();}}
+function pick(k){document.getElementById('in-'+k).click();}
+function clearPhoto(k){delete (photos[cur]||{})[k];renderEdit();}
+function replaceMedia(i,f){if(f&&(f.type.startsWith('image/')||f.type.startsWith('video/'))){get(cur).mlist[i]={file:f};renderEdit();}}
+function addMedia(list){
+  const p=get(cur);p.mlist=p.mlist||[];
+  [...list].filter(f=>f.type.startsWith('image/')||f.type.startsWith('video/')).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).forEach(f=>p.mlist.push({file:f}));
+  renderEdit();
+}
+function mvMedia(i,d){const L=get(cur).mlist,j=i+d;if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];renderEdit();}
+function delMedia(i){get(cur).mlist.splice(i,1);renderEdit();}
+function fillMany(list){
+  const p=get(cur),ph=photos[cur]=photos[cur]||{};p.mlist=p.mlist||[];
+  const all=[...list].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  const imgs=all.filter(f=>f.type.startsWith('image/')),vids=all.filter(f=>f.type.startsWith('video/')),rest=[];
+  for(const f of imgs){const k=ANG.map(a=>a[0]).find(k=>HINT[k].test(f.name)&&!ph[k]);if(k)ph[k]=f;else rest.push(f);}
+  for(const f of rest){const k=ANG.map(a=>a[0]).find(k=>!ph[k]);if(k)ph[k]=f;else p.mlist.push({file:f});}
+  vids.forEach(f=>p.mlist.push({file:f}));
+  renderEdit();
+}
+function extraHtml(p){
+  const L=p.mlist||[];
+  return `<div class="row" style="margin:1.2rem 0 .5rem"><b>Photos et vidéos supplémentaires (${L.length})</b><button class="btn2" onclick="document.getElementById('mx').click()">➕ Ajouter photos / vidéos</button><input id="mx" type="file" accept="image/*,video/*" multiple hidden onchange="addMedia(this.files)"></div>
+  <div class="ex">${L.map((e,i)=>`<div class="exi">${e.file?(e.file.type.startsWith('video/')?`<video src="${URL.createObjectURL(e.file)}" muted preload="metadata"></video>`:`<img src="${URL.createObjectURL(e.file)}" alt="">`):`<span class="muted">${esc(e.old)}<br>(déjà en ligne)</span>`}${e.file?`<small>🆕 ${esc(e.file.name)}</small>`:''}<div class="exb"><button class="btn2 mv" title="Remplacer par un autre fichier" onclick="document.getElementById('rm${i}').click()">🔄</button><input id="rm${i}" type="file" accept="image/*,video/*" hidden onchange="replaceMedia(${i},this.files[0])"><button class="btn2 mv" ${i===0?'disabled':''} onclick="mvMedia(${i},-1)">◀</button><button class="btn2 mv" ${i===L.length-1?'disabled':''} onclick="mvMedia(${i},1)">▶</button><button class="btn-x" onclick="delMedia(${i})">✕</button></div></div>`).join('')}</div>
+  <p class="muted" style="margin-top:.4rem">Autant que tu veux : photos, GIF, vidéos MP4/WebM. Glisse-les sur la fiche : les 4 premières photos vont aux angles, le reste ici. Astuce : vidéos sous 25 Mo pour l'envoi sur GitHub depuis le navigateur.</p>`;
+}
+const REF=[];
+const REFTH={};
+function applyRefTo(p,r){
+  const e=REF.find(x=>x[0]===r);if(!e)return;
+  p.fr.name=e[2]+' '+e[0];p.en.name=e[1]+' '+e[0];p.fr.desc=e[4];p.en.desc=e[5];p.type=e[3]==='a'?'accessory':'premium';delete p.premium;
+  if(p._new)delete p.slug;
+}
+function applyRef(r){const p=get(cur);if(!p)return;pushUndo();applyRefTo(p,r);renderEdit();}
+/* signature de couleurs : histogramme teinte/saturation de l'objet (fond uni écarté, sinon pondération centrale) */
+async function descOf(src){
+  const bmp=await createImageBitmap(src),k=Math.min(1,96/Math.max(bmp.width,bmp.height)),w=Math.max(8,Math.round(bmp.width*k)),h=Math.max(8,Math.round(bmp.height*k));
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,t=Math.max(2,Math.round(Math.min(w,h)*.06)),bi=[];let r=0,g=0,b=0;
+  for(let y=0;y<h;y++)for(let X=0;X<w;X++)if(X<t||y<t||X>=w-t||y>=h-t){const i=(y*w+X)*4;bi.push(i);r+=d[i];g+=d[i+1];b+=d[i+2];}
+  r/=bi.length;g/=bi.length;b/=bi.length;let v=0;bi.forEach(i=>v+=Math.hypot(d[i]-r,d[i+1]-g,d[i+2]-b));v/=bi.length;
+  const uni=v<30,H=new Float32Array(28);let tot=0;
+  for(let y=0;y<h;y++)for(let X=0;X<w;X++){
+    const i=(y*w+X)*4;let wt=1;
+    if(uni){if(Math.hypot(d[i]-r,d[i+1]-g,d[i+2]-b)<45)continue;}else{const dx=(X/w-.5)*2,dy=(y/h-.5)*2;wt=Math.exp(-(dx*dx+dy*dy)*1.5);}
+    const R=d[i]/255,G=d[i+1]/255,B=d[i+2]/255,mx=Math.max(R,G,B),mn=Math.min(R,G,B),sa=mx?(mx-mn)/mx:0;let bin;
+    if(sa<.25||mx<.2)bin=mx<.2?24:mx<.5?25:mx<.8?26:27;
+    else{const hu=mx===R?((G-B)/(mx-mn)+6)%6:mx===G?(B-R)/(mx-mn)+2:(R-G)/(mx-mn)+4;bin=Math.floor(hu*2)%12+(sa>.6?12:0);}
+    H[bin]+=wt;tot+=wt;
+  }
+  if(tot)for(let i=0;i<28;i++)H[i]/=tot;return H;
+}
+const simil=(a,b)=>a.reduce((n,v,i)=>n+Math.min(v,b[i]),0);
+let REFD=null;
+async function refDescs(){
+  if(REFD)return REFD;REFD={};
+  for(const e of REF){const[hd,b64]=REFTH[e[0]].split(','),bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);REFD[e[0]]=await descOf(new Blob([u],{type:'image/jpeg'}));}
+  return REFD;
+}
+async function identify(files){
+  const R=await refDescs(),ds=[];
+  for(const f of files.slice(0,6)){try{ds.push(await descOf(f));}catch(e){}}
+  if(!ds.length)return[];const m=new Float32Array(28);ds.forEach(h=>h.forEach((q,i)=>m[i]+=q/ds.length));
+  return REF.map(e=>[e[0],simil(m,R[e[0]])]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+}
+async function autoFill(groups,ids){
+  const st=document.getElementById('status');
+  for(let i=0;i<groups.length;i++){
+    st.textContent=`Identification ${i+1}/${groups.length}…`;
+    const p=get(ids[i]);let sg=[];try{sg=await identify(groups[i].files);}catch(e){}
+    if(!p||!sg.length)continue;p._sugg=sg;if(!groups[i].name)applyRefTo(p,sg[0][0]);if(view==='list')render();
+  }
+  st.textContent=groups.length+' item(s) créé(s) et identifiés — vérifie les suggestions (surtout si deux scores sont proches), puis télécharge';
+}
+function setCover(k){const p=get(cur);pushUndo();if(k==='front')delete p.cover;else p.cover=k;renderEdit();}
+function swapAngle(a,b){
+  if(a===b)return;const ph=photos[cur]=photos[cur]||{};pushUndo();
+  [ph[a],ph[b]]=[ph[b],ph[a]];{const pr=get(cur),cv=pr.cover||'front';if(cv===a)pr.cover=b;else if(cv===b)pr.cover=a;if(pr.cover==='front')delete pr.cover;}[a,b].forEach(k=>{if(!ph[k])delete ph[k];});renderEdit();
+}
+function renderEdit(){
+  const p=get(cur),ph=photos[cur]||{};
+  const inp=(l,lang,k,ph2,area)=>`<label>${l}${area?`<textarea oninput="setF('${lang}','${k}',this.value)">${esc(p[lang][k])}</textarea>`:`<input type="text" value="${esc(p[lang][k])}" placeholder="${ph2||''}" oninput="setF('${lang}','${k}',this.value)">`}</label>`;
+  document.getElementById('app').innerHTML=`<div class="card" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');fillMany(event.dataTransfer.files)">
+    <div class="row"><h2 style="font-size:1.1rem"><span class="num" title="Numéro affiché sur le site (position dans la liste)">#${pad(Math.max(0,products.findIndex(x=>x.id===p.id))+1)}</span>${p._new?'Nouvel item':'Modifier l\'item'}</h2>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn2" onclick="cancelEdit()">↩ Annuler les modifications</button><button class="btn-x" onclick="delItem(${p.id})">🗑 Supprimer</button><button class="btn" onclick="done()">✔ Terminer</button></div></div>
+    <div class="fields">
+      ${REF.length?`<label>📚 Référentiel (remplit noms, réf. et type)<select onchange="applyRef(this.value)"><option value="">— choisir une référence —</option>${REF.map(e=>`<option value="${e[0]}">${e[0]} · ${e[2]}</option>`).join('')}</select></label>`:''}
+      ${(get(cur)._sugg||[]).length?`<div class="muted" style="grid-column:1/-1">Suggestions (comparaison visuelle) : ${get(cur)._sugg.map(([r,sc])=>`<button type="button" onclick="applyRef('${r}')">${r} · ${Math.round(sc*100)} %</button>`).join(' ')}</div>`:''}
+      ${inp('Nom (français) *','fr','name','ex. Coffre Pixel Doré')}${inp('Nom (anglais)','en','name','= français si vide')}
+      ${rte('Description FR','fr',p.fr.desc)}${rte('Description EN','en',p.en.desc)}
+      ${inp('Tag FR','fr','tag','ex. Éclat rare')}${inp('Tag EN','en','tag','ex. Rare shine')}
+      <label>Prix libre (€)
+        <input type="number" step="0.01" min="0" value="${p.price??''}" oninput="setPrice(this.value)" placeholder="vide = cote marché">
+        <span class="muted" style="font-size:.8rem;font-weight:400">Laisse vide → le site affiche automatiquement le prix de la cote. Sinon, ton prix libre est utilisé.</span>
+      </label>
+      <label>📜 Tirage (optionnel)
+        <input type="number" min="1" step="1" placeholder="ex. 500" value="${p.printRun!=null&&!isNaN(p.printRun)?Math.floor(p.printRun):''}" oninput="setPrintRun(this.value)" style="max-width:140px">
+        <span class="muted" style="font-size:.8rem;font-weight:400">Nombre d’exemplaires produits. Affiché dans la description sur le site si renseigné.</span>
+      </label>
+      <div style="grid-column:1/-1;padding:.75rem;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-weight:800;margin-bottom:.5rem">💎 Scores collectionneur (0–100)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.6rem">
+          <label>Rareté
+            <input type="number" min="0" max="100" step="1" placeholder="ex. 84" value="${p.rarity!=null&&!isNaN(p.rarity)?Math.floor(p.rarity):''}" oninput="setRarity(this.value)">
+          </label>
+          <label>Demande
+            <input type="number" min="0" max="100" step="1" placeholder="ex. 87" value="${p.demand!=null&&!isNaN(p.demand)?Math.floor(p.demand):''}" oninput="setDemand(this.value)">
+          </label>
+          <label>Indice collection
+            <input type="number" min="0" max="100" step="1" placeholder="ex. 85" value="${p.collIndex!=null&&!isNaN(p.collIndex)?Math.floor(p.collIndex):''}" oninput="setCollIndex(this.value)">
+          </label>
+        </div>
+        <label style="margin-top:.55rem">Niveau (raccourci — remplit l’indice collection)
+          <select onchange="setCollIndex(this.value)">
+            <option value="">— non précisé —</option>
+            <option value="15" ${Number(p.collIndex)===15?'selected':''}>🟢 ★ 0–20</option>
+            <option value="30" ${Number(p.collIndex)===30?'selected':''}>🟢 ★★ 21–40</option>
+            <option value="50" ${Number(p.collIndex)===50?'selected':''}>🟡 ★★★ 41–60</option>
+            <option value="70" ${Number(p.collIndex)===70?'selected':''}>🟠 ★★★★ 61–80</option>
+            <option value="88" ${Number(p.collIndex)===88?'selected':''}>🔴 ★★★★★ 81–95</option>
+            <option value="98" ${Number(p.collIndex)===98?'selected':''}>🟣 ★★★★★★ 96–100</option>
+          </select>
+        </label>
+        <span class="muted" style="font-size:.8rem;font-weight:400;display:block;margin-top:.35rem">Le niveau affiché sur le site est dérivé de l’indice collection. Scores collectionneurs (pas des probabilités de distribution McDonald's).</span>
+      </div>
+      <label>État de l'item<select onchange="setCond(this.value)"><option value="">— non précisé —</option>${Object.entries(COND).map(([k,v])=>`<option value="${k}" ${p.cond===k?'selected':''}>${v}</option>`).join('')}</select></label>
+      <label>Type<select onchange="setType(this.value)"><option value="">— non précisé —</option>${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${(p.type||(p.premium?'premium':''))===k?'selected':''}>${v}</option>`).join('')}</select></label>
+      <label style="flex-direction:row;align-items:center;gap:.5rem;color:var(--text);font-size:.9rem"><input type="checkbox" ${p.articulated?'checked':''} onchange="setArt(this.checked)"> 🦾 Articulé</label>
+      <label>Disponibilité<select onchange="setStock(this.value)"><option value="in">✅ En stock</option><option value="low" ${p.stock==='limited'?'selected':''}>⚠️ Stock limité</option><option value="out" ${p.stock===false?'selected':''}>🚫 Épuisé</option></select></label>
+      <label style="flex-direction:row;align-items:center;gap:.5rem;color:var(--text);font-size:.9rem"><input type="checkbox" ${p.qty!=null&&!isNaN(p.qty)?'checked':''} onchange="setQtyOn(this.checked)"> 📦 Gérer la quantité en stock (désactivé par défaut)</label>
+      ${p.qty!=null&&!isNaN(p.qty)?`<label>Quantité en stock<input type="number" min="0" step="1" value="${Math.max(0,Math.floor(p.qty))}" oninput="setQty(this.value)" style="max-width:140px"></label><div id="qtyNote" class="muted" style="display:${Number(p.qty)<=0?'block':'none'};color:#ff7b6b">🚫 Quantité à 0 : l'item s'affichera automatiquement « Épuisé » sur le site.</div>`:''}
+      <label>📅 Année d'édition (optionnel)<input type="number" min="1900" max="2100" step="1" placeholder="ex. 2024" value="${yrOk(p.year)?Math.floor(Number(p.year)):''}" oninput="setYear(this.value)" style="max-width:140px"><span class="muted" style="font-size:.8rem">Laisse vide pour ne rien afficher sur le site.</span></label>
+      <div style="grid-column:1/-1;border:2px solid var(--bd);border-radius:10px;padding:.7rem">
+        <b>📈 Historique de la cote</b> <span class="muted">(graphique sur la fiche « Voir angles », visible par tous, items épuisés compris)</span>
+        <div class="muted" style="margin:.3rem 0 .5rem">Une ligne par relevé : <code>AAAA-MM-JJ ; prix</code> — ex. <code>2026-10-05 ; 12,50</code> (le format JJ/MM/AAAA est accepté aussi). Il faut au moins 2 relevés pour tracer la courbe.</div>
+        <textarea id="coteTxt" rows="5" style="width:100%;font-family:monospace" oninput="setCotes(this.value)" placeholder="2026-09-01 ; 10,00&#10;2026-10-05 ; 12,50">${esc((p.cotes||[]).map(e=>e[0]+' ; '+String(e[1]).replace('.',',')).join('\n'))}</textarea>
+        <div class="row" style="margin-top:.5rem;justify-content:flex-start"><input id="coteAdd" type="number" step="0.01" min="0" placeholder="Cote du jour (€)" style="max-width:170px;background:var(--bg);color:var(--text);border:2px solid var(--bd);border-radius:8px;padding:.45rem"><button type="button" class="btn2" onclick="addCoteToday()">➕ Ajouter aujourd'hui</button></div>
+        <div id="coteNote" class="muted" style="margin-top:.4rem">${esc(coteNoteTxt((p.cotes||[]).length,[]))}</div>
+      </div>
+      <label>Nom des fichiers photos (slug)<input type="text" value="${esc(p.slug||'')}" placeholder="auto : ${esc(slugPreview(p))}" onchange="setSlug(this.value)"></label>
+    </div>
+    <div class="row" style="margin-bottom:.5rem"><b>Photos</b><button class="btn2" onclick="document.getElementById('multi').click()">📁 Choisir les photos</button>
+      <input id="multi" type="file" accept="image/*" multiple hidden onchange="fillMany(this.files)"></div>
+    <div class="slots">${ANG.map(([k,l])=>{const f=ph[k],on=p.slug&&!p._new;
+      const img=f?`<img src="${URL.createObjectURL(f)}" alt="">`:(on?`<img class="cur" src="${SITE_BASE}images/${esc(p.slug)}-${k}.jpg" alt="" onerror="this.style.display='none'">`:'');
+      return `<div class="slot" onclick="pick('${k}')">${img}<span>${f?'':'＋ '+l+(on?'<br>(actuelle en ligne)':'')}</span><b data-k="${k}">${esc(slugPreview(p))}-${k}.jpg</b>
+        <div class="sb" onclick="event.stopPropagation()">${f||on?`<button type="button" class="${(p.cover||'front')===k?'cov':''}" title="Photo affichée sur la page d'accueil de la boutique" onclick="setCover('${k}')">${(p.cover||'front')===k?'⭐ Vitrine':'☆ Vitrine'}</button>`:''}<button type="button" onclick="pick('${k}')">${f||on?'🔄 Remplacer':'＋ Ajouter'}</button>${f?`<button type="button" onclick="clearPhoto('${k}')">↩ Annuler</button><select title="Changer l'angle" onchange="swapAngle('${k}',this.value)">${ANG.map(([a,l])=>`<option value="${a}" ${a===k?'selected':''}>${l}</option>`).join('')}</select>`:''}</div>
+        <input id="in-${k}" type="file" accept="image/*" onchange="setPhoto('${k}',this.files[0])"></div>`;}).join('')}</div>
+    ${extraHtml(p)}
+    <p class="muted" style="margin-top:.6rem">Glisse les 4 photos d'un coup sur ce cadre (noms avec face/droit/gauche/dos placés automatiquement). Une photo laissée vide reste inchangée sur le site.</p>
+  </div>`;
+  updStatus();
+}
+
+/* ---------- Téléchargement ---------- */
+function photoJobs(){
+  ensureSlugs();const j=[];
+  products.forEach(p=>{ANG.forEach(([k])=>{const f=(photos[p.id]||{})[k];if(f)j.push({name:`${p.slug}-${k}.jpg`,file:f});});newMedia(p).forEach(e=>j.push({name:e.name,file:e.file}));});
+  return j;
+}
+function openDl(){
+  const j=photoJobs(),d=document.getElementById('dlg');
+  d.innerHTML=`<h3>Télécharger</h3>
+    <label class="opt"><input type="checkbox" id="dlIdx" checked> L'index (index.html mis à jour)</label>
+    <label class="opt"><input type="checkbox" id="dlPh" ${j.length?'checked':'disabled'} onchange="document.getElementById('phBox').hidden=!this.checked"> Les photos (ZIP du dossier images/) — ${j.length} nouvelle(s)</label>
+    <p class="muted" style="margin:.2rem 0">Les deux cochés : un seul ZIP avec <code>index.html</code> + <code>images/</code>, prêt à envoyer sur GitHub.</p>
+    <div id="phBox" ${j.length?'':'hidden'}>
+      <div class="row"><span class="muted">Lesquelles ?</span><span><button class="btn2" style="padding:.15rem .6rem" onclick="tick(true)">Toutes</button> <button class="btn2" style="padding:.15rem .6rem" onclick="tick(false)">Aucune</button></span></div>
+      <div class="plist">${j.map((x,i)=>`<label class="opt"><input type="checkbox" class="pc" data-i="${i}" checked> ${esc(x.name)}</label>`).join('')}</div>
+      <label class="opt"><input type="checkbox" id="fmt" checked> Mise en forme auto : recadrage sur l'objet, carré, fond uni, lumière équilibrée</label>
+      <label class="opt">Fond <select id="bgm" onchange="document.getElementById('bgc').hidden=this.value!=='c'"><option value="a">Auto (couleur de la photo)</option><option value="w">Blanc</option><option value="c">Choisir…</option></select> <input type="color" id="bgc" value="#ffffff" hidden></label>
+      <label class="opt">Taille (px) <input type="number" id="maxw" value="1000" min="300" max="4000" step="100" style="width:5.5rem"></label>
+    </div>
+    <div style="margin-top:.8rem"><div class="row"><span class="muted">Ou copier le code (à coller dans index.html à la place de <code>const products = [...]</code>)</span><button class="btn2" style="padding:.15rem .6rem" onclick="copyCode()">📋 Copier</button></div><textarea id="codeTa" readonly rows="5" style="width:100%;margin-top:.4rem;font-family:monospace;font-size:.75rem" onclick="this.select()">${esc(productsCode())}</textarea></div>
+    <div class="row" style="margin-top:1rem"><span id="dlSt" class="muted"></span><span><button class="btn2" onclick="this.closest('dialog').close()">Fermer</button> <button class="btn" onclick="doDl()">Télécharger</button></span></div>`;
+  d.showModal();
+}
+function tick(v){document.querySelectorAll('.pc').forEach(c=>c.checked=v);}
+function dlBlob(b,name){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
+async function doDl(){
+  const st=document.getElementById('dlSt'),wantIdx=document.getElementById('dlIdx').checked,ph=document.getElementById('dlPh'),files=[];
+  if(wantIdx)files.push({name:'index.html',data:new TextEncoder().encode(buildIndex())});
+  if(ph&&ph.checked){
+    const j=photoJobs(),sel=[...document.querySelectorAll('.pc')].filter(c=>c.checked).map(c=>j[c.dataset.i]);
+    const mw=Math.max(300,Number(document.getElementById('maxw').value)||1000),fmt=document.getElementById('fmt').checked,bm=document.getElementById('bgm').value,
+      bgc=bm==='w'?'#ffffff':bm==='c'?document.getElementById('bgc').value:null;
+    try{for(let i=0;i<sel.length;i++){st.textContent=`Photo ${i+1}/${sel.length}…`;files.push({name:'images/'+sel[i].name,data:await prep(sel[i],mw,fmt,bgc)});}}
+    catch(e){st.textContent='Erreur : une photo est illisible (HEIC non supporté ?).';return;}
+  }
+  if(!files.length){st.textContent='Rien à télécharger : coche au moins une case.';return;}
+  /* un seul téléchargement : le navigateur bloque les téléchargements multiples */
+  if(files.length===1&&wantIdx)dlBlob(new Blob([files[0].data],{type:'text/html'}),'index.html');
+  else dlBlob(makeZip(files),wantIdx?'harrypotterpops-maj.zip':'images.zip');
+  st.textContent=wantIdx&&files.length>1?'ZIP prêt ✓ (index.html + dossier images/)':'Téléchargement lancé ✓';
+}
+async function prep(j,mw,fmt,bgc){return /\.jpg$/.test(j.name)?toJpeg(j.file,mw,fmt,bgc):new Uint8Array(await j.file.arrayBuffer());}
+const jpgOut=async c=>new Uint8Array(await (await new Promise(r=>c.toBlob(r,'image/jpeg',0.88))).arrayBuffer());
+async function toJpeg(file,S,fmt,bgc){
+  const bmp=await createImageBitmap(file);
+  if(!fmt){const s=Math.min(1,S/bmp.width),c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bmp,0,0,c.width,c.height);return jpgOut(c);}
+  const k=Math.min(1,800/Math.max(bmp.width,bmp.height)),w=Math.round(bmp.width*k),h=Math.round(bmp.height*k);
+  const a=document.createElement('canvas');a.width=w;a.height=h;const ax=a.getContext('2d',{willReadFrequently:true});ax.drawImage(bmp,0,0,w,h);
+  const d=ax.getImageData(0,0,w,h).data,t=Math.max(2,Math.round(Math.min(w,h)*0.02)),bs=[];let r=0,g=0,b=0;
+  for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2)if(x<t||y<t||x>=w-t||y>=h-t){const i=(y*w+x)*4;bs.push(i);r+=d[i];g+=d[i+1];b+=d[i+2];}
+  r/=bs.length;g/=bs.length;b/=bs.length;
+  let v=0;bs.forEach(i=>v+=Math.hypot(d[i]-r,d[i+1]-g,d[i+2]-b));v/=bs.length;
+  let box=[0,0,w,h],bg=[255,255,255];
+  if(v<25){ /* fond quasi uni : on cadre sur l'objet */
+    bg=[r,g,b];const rows=new Uint32Array(h),cols=new Uint32Array(w);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(Math.hypot(d[i]-r,d[i+1]-g,d[i+2]-b)>45){rows[y]++;cols[x]++;}}
+    const mr=Math.max(2,w*0.004),mc=Math.max(2,h*0.004);let y0=0,y1=h-1,x0=0,x1=w-1;
+    while(y0<h&&rows[y0]<mr)y0++;while(y1>y0&&rows[y1]<mr)y1--;while(x0<w&&cols[x0]<mc)x0++;while(x1>x0&&cols[x1]<mc)x1--;
+    if((x1-x0)*(y1-y0)>w*h*0.04)box=[x0,y0,x1+1,y1+1];
+  }
+  const sx=box[0]/k,sy=box[1]/k,sw=(box[2]-box[0])/k,sh=(box[3]-box[1])/k,sc=Math.min(S*0.88/sw,S*0.88/sh);
+  const c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d',{willReadFrequently:true});
+  x.fillStyle=(v>=25&&bgc)?bgc:`rgb(${bg.map(Math.round)})`;x.fillRect(0,0,S,S);x.imageSmoothingQuality='high';
+  x.drawImage(bmp,sx,sy,sw,sh,(S-sw*sc)/2,(S-sh*sc)/2,sw*sc,sh*sc);
+  /* lumière : étirement des niveaux (1 % / 99 %), borné pour rester naturel */
+  const im=x.getImageData(0,0,S,S),p=im.data,H=new Uint32Array(256);
+  for(let i=0;i<p.length;i+=16)H[Math.round(.299*p[i]+.587*p[i+1]+.114*p[i+2])]++;
+  const tot=H.reduce((m,n)=>m+n,0);let acc=0,lo=0,hi=255;
+  for(let i=0;i<256;i++){acc+=H[i];if(acc>=tot*.01){lo=i;break;}}acc=0;
+  for(let i=255;i>=0;i--){acc+=H[i];if(acc>=tot*.01){hi=i;break;}}
+  lo=Math.min(lo,60);hi=Math.max(hi,195);const m=255/(hi-lo);
+  for(let i=0;i<p.length;i+=4)for(let j=0;j<3;j++)p[i+j]=Math.max(0,Math.min(255,(p[i+j]-lo)*m));
+  x.putImageData(im,0,0);
+  if(bgc&&v<25){ /* remplace le fond uni (connecté aux bords) par la couleur choisie, bord adouci */
+    const mp=u=>Math.max(0,Math.min(255,(u-lo)*m)),B=bg.map(mp),T=[1,3,5].map(i=>parseInt(bgc.slice(i,i+2),16));
+    const i2=x.getImageData(0,0,S,S),q=i2.data,seen=new Uint8Array(S*S),stk=[],ds=i=>Math.hypot(q[i]-B[0],q[i+1]-B[1],q[i+2]-B[2]);
+    const push=(X,Y)=>{const n=Y*S+X;if(!seen[n]&&ds(n*4)<40){seen[n]=1;stk.push(n);}};
+    for(let i=0;i<S;i++){push(i,0);push(i,S-1);push(0,i);push(S-1,i);}
+    while(stk.length){const n=stk.pop(),X=n%S,Y=(n-X)/S,i=n*4,al=Math.max(0,Math.min(1,(ds(i)-14)/26));
+      for(let j=0;j<3;j++)q[i+j]=T[j]*(1-al)+q[i+j]*al;
+      if(X>0)push(X-1,Y);if(X<S-1)push(X+1,Y);if(Y>0)push(X,Y-1);if(Y<S-1)push(X,Y+1);}
+    x.putImageData(i2,0,0);
+  }
+  return jpgOut(c);
+}
+const CRC=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(b){let c=-1;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^-1)>>>0;}
+function makeZip(files){
+  const enc=new TextEncoder(),parts=[],central=[];let off=0;
+  const d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
+  for(const f of files){
+    const n=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length,lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,n.length,true);
+    parts.push(lh.buffer,n,f.data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,n.length,true);ch.setUint32(42,off,true);
+    central.push(ch.buffer,n);off+=30+n.length+sz;
+  }
+  const cs=central.reduce((a,b)=>a+b.byteLength,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,e.buffer],{type:'application/zip'});
+}
+render();
+</script>
+</body>
+</html>
