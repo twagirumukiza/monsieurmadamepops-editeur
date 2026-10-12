@@ -94,6 +94,12 @@ const COND={new:'Neuf',vgood:'Très bon état',good:'Bon état'};
 const pad=n=>String(n).padStart(2,'0');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const slugify=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+const ORDER=['front','right','left','back'];
+let SERIES={};            /* séries du site, lues dans son index.html */
+const ONLINE={};          /* id -> {angle:true} : photos qui existent réellement en ligne */
+const slugOf=p=>p.slug||slugify(p.fr.name)||('item-'+pad(p.id));
+/* Nom des fichiers = slug + série, comme sur GitHub et sur le site : <slug>-s<série>-<angle>.jpg */
+const baseOf=p=>slugOf(p)+(p.series?'-s'+Math.floor(Number(p.series)):'');
 let src='',start=-1,end=-1,products=[],defPrice=9.99,photos={},view='load',cur=null;
 
 /* ---------- Historique (annuler / rétablir) ---------- */
@@ -137,6 +143,8 @@ function parseIndex(text){
   const arr=(new Function('return '+text.slice(s,e+1)))();
   if(!Array.isArray(arr)||!arr.length)throw new Error('Aucun item trouvé.');
   const p=text.match(/const PRICE\s*=\s*([\d.]+)/);
+  SERIES={};try{const sm=text.match(/const SERIES\s*=\s*\{/);if(sm){const s0=sm.index+sm[0].length-1;let d2=0,q2=null,e2=-1;for(let i=s0;i<text.length;i++){const c=text[i];if(q2){if(c==='\\')i++;else if(c===q2)q2=null;continue;}if(c==='"'||c==="'"||c==='`')q2=c;else if(c==='{')d2++;else if(c==='}'&&--d2===0){e2=i;break;}}if(e2>0)SERIES=(new Function('return '+text.slice(s0,e2+1)))();}}catch(e){SERIES={};}
+  Object.keys(ONLINE).forEach(k=>delete ONLINE[k]);
   src=text;start=s;end=e;products=arr;products.forEach(x=>{x.mlist=(x.media||[]).map(n=>({old:n}));if(x.premium){x.type=x.type||'premium';delete x.premium;}});undoSt=[];redoSt=[];defPrice=p?Number(p[1]):9.99;photos={};view='list';
   render();
 }
@@ -154,7 +162,7 @@ function assignMedia(p){
   const L=p.mlist||[],used=new Set(L.filter(e=>e.old).map(e=>e.old));let n=1;
   L.forEach(e=>{if(!e.file)return;
     const v=e.file.type.startsWith('video/'),ext=v?((e.file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4'):(/\.gif$/i.test(e.file.name)?'gif':'jpg');
-    let nm;do{nm=`${p.slug}-extra-${pad(n++)}.${ext}`;}while(used.has(nm));used.add(nm);e.name=nm;});
+    let nm;do{nm=`${baseOf(p)}-extra-${pad(n++)}.${ext}`;}while(used.has(nm));used.add(nm);e.name=nm;});
   p.media=L.map(e=>e.old||e.name);
   if(!p.media.length)delete p.media;
 }
@@ -169,9 +177,17 @@ function ensureSlugs(){
   products.forEach(p=>{if(p.slug||!newMedia(p).length)assignMedia(p);});
 }
 const q=JSON.stringify;
+/* angles réellement photographiés (l'ensemble complet = champ omis) : on garde ceux du site et on ajoute les nouvelles photos */
+function angList(p){
+  const ph=photos[p.id]||{},add=ORDER.filter(k=>ph[k]);
+  let a=Array.isArray(p.angles)?p.angles.slice():null;
+  if(add.length){if(!a)a=ORDER.filter(k=>(ONLINE[p.id]||{})[k]);a=ORDER.filter(k=>a.includes(k)||add.includes(k));}
+  return a&&a.length&&a.length<4?ORDER.filter(k=>a.includes(k)):null;
+}
+const angLine=p=>{const a=angList(p);return a?`    angles: ${q(a)},\n`:'';};
 function ser(p){
   const t=l=>`{ name: ${q(l.name||'')}, desc: ${q(l.desc||'')}, tag: ${q(l.tag||'')} }`;
-  return `  {\n    id: ${p.id},\n`+(p.slug?`    slug: ${q(p.slug)},\n`:'')+(p.price!=null&&p.price!==''?`    price: ${Number(p.price)},\n`:'')+(p.cond&&COND[p.cond]?`    cond: ${q(p.cond)},\n`:'')+(p.type&&TYPES[p.type]?`    type: ${q(p.type)},\n`:'')+(p.articulated?`    articulated: true,\n`:'')+(p.cover&&p.cover!=='front'&&ANG.some(a=>a[0]===p.cover)?`    cover: ${q(p.cover)},\n`:'')+(p.stock===false||p.stock==='limited'?`    stock: ${q(p.stock)},\n`:'')+(p.qty!=null&&p.qty!==''&&!isNaN(p.qty)?`    qty: ${Math.max(0,Math.floor(Number(p.qty)))},\n`:'')+(p.printRun!=null&&p.printRun!==''&&!isNaN(p.printRun)&&Number(p.printRun)>0?`    printRun: ${Math.floor(Number(p.printRun))},\n`:'')+(p.rarity!=null&&p.rarity!==''&&!isNaN(p.rarity)?`    rarity: ${Math.min(100,Math.max(0,Math.floor(Number(p.rarity))))},\n`:'')+(p.demand!=null&&p.demand!==''&&!isNaN(p.demand)?`    demand: ${Math.min(100,Math.max(0,Math.floor(Number(p.demand))))},\n`:'')+(p.collIndex!=null&&p.collIndex!==''&&!isNaN(p.collIndex)?`    collIndex: ${Math.min(100,Math.max(0,Math.floor(Number(p.collIndex))))},\n`:'')+(yrOk(p.year)?`    year: ${Math.floor(Number(p.year))},\n`:'')+(p.cotes&&p.cotes.length?`    cotes: ${q(p.cotes)},\n`:'')+(p.media&&p.media.length?`    media: ${q(p.media)},\n`:'')+`    en: ${t(p.en)},\n    fr: ${t(p.fr)}\n  }`;
+  return `  {\n    id: ${p.id},\n`+(p.slug?`    slug: ${q(p.slug)},\n`:'')+(p.series?`    series: ${Math.floor(Number(p.series))},\n`:'')+angLine(p)+(p.price!=null&&p.price!==''?`    price: ${Number(p.price)},\n`:'')+(p.cond&&COND[p.cond]?`    cond: ${q(p.cond)},\n`:'')+(p.type&&TYPES[p.type]?`    type: ${q(p.type)},\n`:'')+(p.articulated?`    articulated: true,\n`:'')+(p.cover&&p.cover!=='front'&&ANG.some(a=>a[0]===p.cover)?`    cover: ${q(p.cover)},\n`:'')+(p.stock===false||p.stock==='limited'?`    stock: ${q(p.stock)},\n`:'')+(p.qty!=null&&p.qty!==''&&!isNaN(p.qty)?`    qty: ${Math.max(0,Math.floor(Number(p.qty)))},\n`:'')+(p.printRun!=null&&p.printRun!==''&&!isNaN(p.printRun)&&Number(p.printRun)>0?`    printRun: ${Math.floor(Number(p.printRun))},\n`:'')+(p.rarity!=null&&p.rarity!==''&&!isNaN(p.rarity)?`    rarity: ${Math.min(100,Math.max(0,Math.floor(Number(p.rarity))))},\n`:'')+(p.demand!=null&&p.demand!==''&&!isNaN(p.demand)?`    demand: ${Math.min(100,Math.max(0,Math.floor(Number(p.demand))))},\n`:'')+(p.collIndex!=null&&p.collIndex!==''&&!isNaN(p.collIndex)?`    collIndex: ${Math.min(100,Math.max(0,Math.floor(Number(p.collIndex))))},\n`:'')+(yrOk(p.year)?`    year: ${Math.floor(Number(p.year))},\n`:'')+(p.cotes&&p.cotes.length?`    cotes: ${q(p.cotes)},\n`:'')+(p.media&&p.media.length?`    media: ${q(p.media)},\n`:'')+`    en: ${t(p.en)},\n    fr: ${t(p.fr)}\n  }`;
 }
 function productsCode(){
   ensureSlugs();products.forEach(p=>{if(!p.en.name)p.en.name=p.fr.name;});
@@ -210,7 +226,7 @@ function render(){
   yearStrip()+
   products.map((p,i)=>`<div class="card row">
     <div><span class="num" title="Numéro affiché sur le site (position dans la liste)">#${pad(i+1)}</span><b>${esc(p.fr.name)||'<i>(sans nom)</i>'}</b> <span class="muted">/ ${esc(p.en.name)}</span><br>
-      <span class="muted">${esc(p.fr.tag)} · ${p.cond&&COND[p.cond]?COND[p.cond]+' · ':''}</span>${p.type&&TYPES[p.type]?'<b style="color:#ffd95e">'+TYPES[p.type]+'</b><span class="muted"> · </span>':''}${p.articulated?'<b style="color:#b39ddb">🦾 Articulé</b><span class="muted"> · </span>':''}${p.qty!=null&&!isNaN(p.qty)?'<b style="color:#9fd6ff">📦 '+Math.max(0,Math.floor(p.qty))+'</b><span class="muted"> · </span>':''}${(p.stock===false||(p.qty!=null&&Number(p.qty)<=0))?'<b style="color:#ff7b6b">🚫 Épuisé</b><span class="muted"> · </span>':p.stock==='limited'?'<b style="color:#ffb74d">⚠️ Stock limité</b><span class="muted"> · </span>':''}${yrOk(p.year)?'<b style="color:#fff">📅 '+Math.floor(Number(p.year))+'</b><span class="muted"> · </span>':''}${p.printRun!=null&&!isNaN(p.printRun)&&Number(p.printRun)>0?'<b style="color:#ce93d8">📜 ×'+Math.floor(p.printRun)+'</b><span class="muted"> · </span>':''}${p.collIndex!=null&&!isNaN(p.collIndex)?'<b style="color:#ffd54f">💎 '+Math.floor(p.collIndex)+'/100</b><span class="muted"> · </span>':(p.rarity!=null&&!isNaN(p.rarity)?'<b style="color:#ffd54f">💎 R'+Math.floor(p.rarity)+'</b><span class="muted"> · </span>':'')}<span class="price">${p.price!=null&&p.price!==''?Number(p.price).toFixed(2)+' €':'📈 cote'}</span>
+      <span class="muted">${esc(p.fr.tag)} · ${p.series?'Série '+Math.floor(Number(p.series))+' · ':''}${p.cond&&COND[p.cond]?COND[p.cond]+' · ':''}</span>${p.type&&TYPES[p.type]?'<b style="color:#ffd95e">'+TYPES[p.type]+'</b><span class="muted"> · </span>':''}${p.articulated?'<b style="color:#b39ddb">🦾 Articulé</b><span class="muted"> · </span>':''}${p.qty!=null&&!isNaN(p.qty)?'<b style="color:#9fd6ff">📦 '+Math.max(0,Math.floor(p.qty))+'</b><span class="muted"> · </span>':''}${(p.stock===false||(p.qty!=null&&Number(p.qty)<=0))?'<b style="color:#ff7b6b">🚫 Épuisé</b><span class="muted"> · </span>':p.stock==='limited'?'<b style="color:#ffb74d">⚠️ Stock limité</b><span class="muted"> · </span>':''}${yrOk(p.year)?'<b style="color:#fff">📅 '+Math.floor(Number(p.year))+'</b><span class="muted"> · </span>':''}${p.printRun!=null&&!isNaN(p.printRun)&&Number(p.printRun)>0?'<b style="color:#ce93d8">📜 ×'+Math.floor(p.printRun)+'</b><span class="muted"> · </span>':''}${p.collIndex!=null&&!isNaN(p.collIndex)?'<b style="color:#ffd54f">💎 '+Math.floor(p.collIndex)+'/100</b><span class="muted"> · </span>':(p.rarity!=null&&!isNaN(p.rarity)?'<b style="color:#ffd54f">💎 R'+Math.floor(p.rarity)+'</b><span class="muted"> · </span>':'')}<span class="price">${p.price!=null&&p.price!==''?Number(p.price).toFixed(2)+' €':'📈 cote'}</span>
       <span class="muted"> · ${p.slug?'photos individuelles':'photo de groupe'}${photoCount(p)?` · <b style="color:var(--acc)">${photoCount(p)} nouvelle(s)</b>`:''}</span></div>
     <div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn2 mv" title="Monter" ${i===0?'disabled':''} onclick="mv(${i},-1)">▲</button><button class="btn2 mv" title="Descendre" ${i===products.length-1?'disabled':''} onclick="mv(${i},1)">▼</button><button class="btn2" onclick="edit(${p.id})">✏️ Modifier</button><button class="btn-x" title="Supprimer" onclick="delItem(${p.id})">🗑</button></div></div>`).join('');
   updStatus();
@@ -262,6 +278,7 @@ function setYear(v){const p=get(cur);v=String(v).trim();if(v===''||!/^\d{4}$/.te
 function setQtyOn(on){const p=get(cur);if(on){if(p.qty==null||isNaN(p.qty))p.qty=1;}else delete p.qty;renderEdit();}
 function setQty(v){const p=get(cur);v=String(v).trim();p.qty=(v===''||isNaN(v))?0:Math.max(0,Math.floor(Number(v)));const n=document.getElementById('qtyNote');if(n)n.style.display=p.qty<=0?'block':'none';}
 function setStock(v){const p=get(cur);if(v==='out')p.stock=false;else if(v==='low')p.stock='limited';else delete p.stock;}
+function setSeries(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v)||Number(v)<1)delete p.series;else p.series=Math.floor(Number(v));renderEdit();}
 function setCond(v){const p=get(cur);if(v)p.cond=v;else delete p.cond;}
 function get(id){return products.find(p=>p.id===id);}
 function addItem(){
@@ -298,15 +315,23 @@ function bulkAdd(list){
     groups=[...m.values()];
   }else groups=autoGroups(imgs);
   pushUndo();
-  let id=Math.max(0,...products.map(p=>p.id));const newIds=[];
+  let id=Math.max(0,...products.map(p=>p.id));const newIds=[];let nCre=0,nMat=0;
   groups.forEach(g=>{
-    id++;newIds.push(id);const p={id,_new:true,en:{name:g.name,desc:'',tag:''},fr:{name:g.name,desc:'',tag:''},mlist:[]},ph=photos[id]={};
+    /* noms harmonisés <slug>-s<série>-<angle>.jpg : les photos vont sur l'item existant (même slug, même série) */
+    const sm=slugify(g.name).match(/^(.*?)-s(\d+)$/),sl0=sm?sm[1]:slugify(g.name),se0=sm?Number(sm[2]):null;
+    const ex=products.find(x=>x.slug===sl0&&(se0==null||Number(x.series)===se0));
+    let p,ph;
+    if(ex){p=ex;ph=photos[p.id]=photos[p.id]||{};p.mlist=p.mlist||[];nMat++;newIds.push(p.id);}
+    else{
+      id++;newIds.push(id);const nm=sm?g.name.replace(/\s+s\d+$/i,''):g.name;
+      p={id,_new:true,en:{name:nm,desc:'',tag:''},fr:{name:nm,desc:'',tag:''},mlist:[]};if(se0!=null)p.series=se0;ph=photos[id]={};nCre++;
+    }
     const rest=[];g.files.forEach(f=>{const k=ANG.map(a=>a[0]).find(k=>HINT[k].test(f.name)&&!ph[k]);if(k)ph[k]=f;else rest.push(f);});
     rest.forEach(f=>{const k=ANG.map(a=>a[0]).find(k=>!ph[k]);if(k)ph[k]=f;else p.mlist.push({file:f});});
-    products.push(p);
+    if(!ex)products.push(p);
   });
   view='list';render();
-  document.getElementById('status').textContent=groups.length+' item(s) créé(s) — identification en cours…';autoFill(groups,newIds);
+  document.getElementById('status').textContent=nCre+' item(s) créé(s), '+nMat+' rattaché(s) à un item existant — identification en cours…';autoFill(groups,newIds);
 }
 function done(){
   const p=get(cur);
@@ -355,7 +380,7 @@ function setRarity(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v))de
 function setDemand(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v))delete p.demand;else p.demand=Math.min(100,Math.max(0,Math.floor(Number(v))));}
 function setCollIndex(v){const p=get(cur);v=String(v).trim();if(v===''||isNaN(v))delete p.collIndex;else p.collIndex=Math.min(100,Math.max(0,Math.floor(Number(v))));}
 function setSlug(v){const p=get(cur);const s=slugify(v);if(s)p.slug=s;else delete p.slug;labels();}
-function slugPreview(p){return p.slug||slugify(p.fr.name)||('item-'+pad(p.id));}
+function slugPreview(p){return baseOf(p);}
 function labels(){const p=get(cur);document.querySelectorAll('.slot b').forEach(b=>b.textContent=slugPreview(p)+'-'+b.dataset.k+'.jpg');}
 function setPhoto(k,f){if(f&&f.type.startsWith('image/')){(photos[cur]=photos[cur]||{})[k]=f;renderEdit();}}
 function pick(k){document.getElementById('in-'+k).click();}
@@ -429,7 +454,7 @@ async function autoFill(groups,ids){
     const p=get(ids[i]);let sg=[];try{sg=await identify(groups[i].files);}catch(e){}
     if(!p||!sg.length)continue;p._sugg=sg;if(!groups[i].name)applyRefTo(p,sg[0][0]);if(view==='list')render();
   }
-  st.textContent=groups.length+' item(s) créé(s) et identifiés — vérifie les suggestions (surtout si deux scores sont proches), puis télécharge';
+  st.textContent=groups.length+' groupe(s) de photos traité(s) — vérifie les items (nom, série, angles), puis télécharge';
 }
 function setCover(k){const p=get(cur);pushUndo();if(k==='front')delete p.cover;else p.cover=k;renderEdit();}
 function swapAngle(a,b){
@@ -488,6 +513,7 @@ function renderEdit(){
       <label>Disponibilité<select onchange="setStock(this.value)"><option value="in">✅ En stock</option><option value="low" ${p.stock==='limited'?'selected':''}>⚠️ Stock limité</option><option value="out" ${p.stock===false?'selected':''}>🚫 Épuisé</option></select></label>
       <label style="flex-direction:row;align-items:center;gap:.5rem;color:var(--text);font-size:.9rem"><input type="checkbox" ${p.qty!=null&&!isNaN(p.qty)?'checked':''} onchange="setQtyOn(this.checked)"> 📦 Gérer la quantité en stock (désactivé par défaut)</label>
       ${p.qty!=null&&!isNaN(p.qty)?`<label>Quantité en stock<input type="number" min="0" step="1" value="${Math.max(0,Math.floor(p.qty))}" oninput="setQty(this.value)" style="max-width:140px"></label><div id="qtyNote" class="muted" style="display:${Number(p.qty)<=0?'block':'none'};color:#ff7b6b">🚫 Quantité à 0 : l'item s'affichera automatiquement « Épuisé » sur le site.</div>`:''}
+      ${Object.keys(SERIES).length?`<label>📚 Série<select onchange="setSeries(this.value)"><option value="">— aucune —</option>${Object.keys(SERIES).sort((a,b)=>a-b).map(n=>`<option value="${n}" ${String(p.series)===n?'selected':''}>${esc(SERIES[n].fr||('Série '+n))}${SERIES[n].dFr?' — '+esc(SERIES[n].dFr):''}</option>`).join('')}</select><span class="muted" style="font-size:.8rem">Les photos s'appellent <code>${esc(baseOf(p))}-front.jpg</code>… (slug + série, comme sur GitHub et sur le site).</span></label>`:`<label>📚 Série (numéro)<input type="number" min="1" step="1" value="${p.series||''}" onchange="setSeries(this.value)" style="max-width:140px"></label>`}
       <label>📅 Année d'édition (optionnel)<input type="number" min="1900" max="2100" step="1" placeholder="ex. 2024" value="${yrOk(p.year)?Math.floor(Number(p.year)):''}" oninput="setYear(this.value)" style="max-width:140px"><span class="muted" style="font-size:.8rem">Laisse vide pour ne rien afficher sur le site.</span></label>
       <div style="grid-column:1/-1;border:2px solid var(--bd);border-radius:10px;padding:.7rem">
         <b>📈 Historique de la cote</b> <span class="muted">(graphique sur la fiche « Voir angles », visible par tous, items épuisés compris)</span>
@@ -496,12 +522,12 @@ function renderEdit(){
         <div class="row" style="margin-top:.5rem;justify-content:flex-start"><input id="coteAdd" type="number" step="0.01" min="0" placeholder="Cote du jour (€)" style="max-width:170px;background:var(--bg);color:var(--text);border:2px solid var(--bd);border-radius:8px;padding:.45rem"><button type="button" class="btn2" onclick="addCoteToday()">➕ Ajouter aujourd'hui</button></div>
         <div id="coteNote" class="muted" style="margin-top:.4rem">${esc(coteNoteTxt((p.cotes||[]).length,[]))}</div>
       </div>
-      <label>Nom des fichiers photos (slug)<input type="text" value="${esc(p.slug||'')}" placeholder="auto : ${esc(slugPreview(p))}" onchange="setSlug(this.value)"></label>
+      <label>Nom des fichiers photos (slug)<input type="text" value="${esc(p.slug||'')}" placeholder="auto : ${esc(slugOf(p))}" onchange="setSlug(this.value)"></label>
     </div>
     <div class="row" style="margin-bottom:.5rem"><b>Photos</b><button class="btn2" onclick="document.getElementById('multi').click()">📁 Choisir les photos</button>
       <input id="multi" type="file" accept="image/*" multiple hidden onchange="fillMany(this.files)"></div>
-    <div class="slots">${ANG.map(([k,l])=>{const f=ph[k],on=p.slug&&!p._new;
-      const img=f?`<img src="${URL.createObjectURL(f)}" alt="">`:(on?`<img class="cur" src="${SITE_BASE}images/${esc(p.slug)}-${k}.jpg" alt="" onerror="this.style.display='none'">`:'');
+    <div class="slots">${ANG.map(([k,l])=>{const f=ph[k],on=p.slug&&!p._new&&(!Array.isArray(p.angles)||p.angles.includes(k));
+      const img=f?`<img src="${URL.createObjectURL(f)}" alt="">`:(on?`<img class="cur" src="${SITE_BASE}images/${esc(baseOf(p))}-${k}.jpg" alt="" onload="(ONLINE[${p.id}]=ONLINE[${p.id}]||{}).${k}=true" onerror="this.style.display='none'">`:'');
       return `<div class="slot" onclick="pick('${k}')">${img}<span>${f?'':'＋ '+l+(on?'<br>(actuelle en ligne)':'')}</span><b data-k="${k}">${esc(slugPreview(p))}-${k}.jpg</b>
         <div class="sb" onclick="event.stopPropagation()">${f||on?`<button type="button" class="${(p.cover||'front')===k?'cov':''}" title="Photo affichée sur la page d'accueil de la boutique" onclick="setCover('${k}')">${(p.cover||'front')===k?'⭐ Vitrine':'☆ Vitrine'}</button>`:''}<button type="button" onclick="pick('${k}')">${f||on?'🔄 Remplacer':'＋ Ajouter'}</button>${f?`<button type="button" onclick="clearPhoto('${k}')">↩ Annuler</button><select title="Changer l'angle" onchange="swapAngle('${k}',this.value)">${ANG.map(([a,l])=>`<option value="${a}" ${a===k?'selected':''}>${l}</option>`).join('')}</select>`:''}</div>
         <input id="in-${k}" type="file" accept="image/*" onchange="setPhoto('${k}',this.files[0])"></div>`;}).join('')}</div>
@@ -514,7 +540,7 @@ function renderEdit(){
 /* ---------- Téléchargement ---------- */
 function photoJobs(){
   ensureSlugs();const j=[];
-  products.forEach(p=>{ANG.forEach(([k])=>{const f=(photos[p.id]||{})[k];if(f)j.push({name:`${p.slug}-${k}.jpg`,file:f});});newMedia(p).forEach(e=>j.push({name:e.name,file:e.file}));});
+  products.forEach(p=>{ANG.forEach(([k])=>{const f=(photos[p.id]||{})[k];if(f)j.push({name:`${baseOf(p)}-${k}.jpg`,file:f});});newMedia(p).forEach(e=>j.push({name:e.name,file:e.file}));});
   return j;
 }
 function openDl(){
@@ -549,7 +575,7 @@ async function doDl(){
   if(!files.length){st.textContent='Rien à télécharger : coche au moins une case.';return;}
   /* un seul téléchargement : le navigateur bloque les téléchargements multiples */
   if(files.length===1&&wantIdx)dlBlob(new Blob([files[0].data],{type:'text/html'}),'index.html');
-  else dlBlob(makeZip(files),wantIdx?'harrypotterpops-maj.zip':'images.zip');
+  else dlBlob(makeZip(files),wantIdx?'monsieurmadamepops-maj.zip':'images.zip');
   st.textContent=wantIdx&&files.length>1?'ZIP prêt ✓ (index.html + dossier images/)':'Téléchargement lancé ✓';
 }
 async function prep(j,mw,fmt,bgc){return /\.jpg$/.test(j.name)?toJpeg(j.file,mw,fmt,bgc):new Uint8Array(await j.file.arrayBuffer());}
